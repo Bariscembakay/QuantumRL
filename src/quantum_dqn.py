@@ -12,8 +12,9 @@ from qiskit_machine_learning.connectors import TorchConnector
 
 # 1. Quantum Neural Network for Q-Value Approximation
 class QuantumQNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self, grid_size=3):
         super(QuantumQNetwork, self).__init__()
+        self.grid_size = grid_size
         # We use 3 layers to ensure the VQC has enough trainable parameters (expressivity)
         self.circuit, self.input_params = create_qrl_circuit(num_qubits=4, layers=3)
         
@@ -48,9 +49,9 @@ class QuantumQNetwork(nn.Module):
         nn.init.constant_(self.output_layer.bias, 0.0)
         
     def forward(self, x):
-        # GridWorld states are coordinates in [0, 2].
-        # We scale them by pi/2 to fit into the [0, pi] range for angle encoding.
-        x_scaled = x * (np.pi / 2.0)
+        # GridWorld states are coordinates in [0, grid_size-1].
+        # We scale them to fit into the [0, pi] range for angle encoding.
+        x_scaled = x * (np.pi / (self.grid_size - 1.0))
         qnn_out = self.qnn_connector(x_scaled)
         return self.output_layer(qnn_out)
 
@@ -70,10 +71,10 @@ class ReplayBuffer:
 
 # 3. Quantum DQN Agent
 class QuantumDQNAgent:
-    def __init__(self):
+    def __init__(self, grid_size=3):
         self.action_dim = 4
-        self.policy_net = QuantumQNetwork()
-        self.target_net = QuantumQNetwork()
+        self.policy_net = QuantumQNetwork(grid_size=grid_size)
+        self.target_net = QuantumQNetwork(grid_size=grid_size)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         
         # VQC usually benefits from a slightly higher learning rate than classical networks
@@ -124,9 +125,9 @@ class QuantumDQNAgent:
         # Epsilon decay
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
-def train_quantum_dqn(episodes=150):
-    env = GridWorldEnv()
-    agent = QuantumDQNAgent()
+def train_quantum_dqn(episodes=150, grid_size=3):
+    env = GridWorldEnv(size=grid_size)
+    agent = QuantumDQNAgent(grid_size=grid_size)
     rewards_history = []
 
     for episode in range(episodes):

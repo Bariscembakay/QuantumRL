@@ -28,7 +28,7 @@ class GridWorldEnv(gym.Env):
         
         # Define Fixed Positions
         self.start_pos = np.array([0, 0])
-        self.goal_pos = np.array([2, 2])
+        self.goal_pos = np.array([size - 1, size - 1])
         self.obstacle_pos = np.array([1, 1])
         
         self.state = self.start_pos.copy()

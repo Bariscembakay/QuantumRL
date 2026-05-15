@@ -89,8 +89,8 @@ class DQNAgent:
         # Epsilon decay
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
-def train_dqn(episodes=500):
-    env = GridWorldEnv()
+def train_dqn(episodes=500, grid_size=3):
+    env = GridWorldEnv(size=grid_size)
     agent = DQNAgent(state_dim=2, action_dim=4)
     rewards_history = []
 
