@@ -84,9 +84,13 @@ class DQNAgent:
         loss = nn.MSELoss()(current_q, expected_q)
         self.optimizer.zero_grad()
         loss.backward()
+        
+        # Add gradient clipping for stability
+        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), max_norm=1.0)
+        
         self.optimizer.step()
         
-        # Epsilon decay
+    def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
 def train_dqn(episodes=500, grid_size=3):
@@ -109,6 +113,9 @@ def train_dqn(episodes=500, grid_size=3):
         
         if episode % agent.target_update == 0:
             agent.target_net.load_state_dict(agent.policy_net.state_dict())
+            
+        # Epsilon decay at the end of each episode
+        agent.decay_epsilon()
             
         rewards_history.append(total_reward)
         if episode % 50 == 0:

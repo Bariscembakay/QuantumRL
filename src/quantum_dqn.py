@@ -77,8 +77,8 @@ class QuantumDQNAgent:
         self.target_net = QuantumQNetwork(grid_size=grid_size)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         
-        # VQC usually benefits from a slightly higher learning rate than classical networks
-        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=0.01)
+        # Lower learning rate for stability (VQCs are sensitive)
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=0.001)
         self.memory = ReplayBuffer(5000)
         
         self.gamma = 0.99
@@ -120,10 +120,14 @@ class QuantumDQNAgent:
         
         self.optimizer.zero_grad()
         loss.backward()
+        
+        # Add gradient clipping to prevent weight explosions
+        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), max_norm=1.0)
+        
         self.optimizer.step()
         
-        # Epsilon decay
-        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+        # Epsilon decay moved to end of episode for better exploration
+        pass
 
 def train_quantum_dqn(episodes=150, grid_size=3):
     env = GridWorldEnv(size=grid_size)
@@ -151,6 +155,9 @@ def train_quantum_dqn(episodes=150, grid_size=3):
         # Update target network
         if episode % agent.target_update == 0:
             agent.target_net.load_state_dict(agent.policy_net.state_dict())
+            
+        # Epsilon decay at the end of each episode
+        agent.epsilon = max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
             
         rewards_history.append(total_reward)
         if episode % 10 == 0:
