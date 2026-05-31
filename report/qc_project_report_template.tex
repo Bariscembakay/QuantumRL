@@ -117,11 +117,11 @@
   {\Large\textbf{Quantum Reinforcement Learning for Grid World Navigation: A Comparative Analysis}}\\[16pt]
     \textcolor{black}{\rule{0.7\textwidth}{1.5pt}}\\[40pt]
 
-    {\textcolor{placeholder}{Prepared by}}\\[8pt]
+    {\large\textbf{Prepared by}}\\[8pt]
     {\large Barış Cem Bakay}\\[4pt]
-    {\large 0082990}\\[30pt]
+    {\large Student ID: 0082990}\\[30pt]
 
-    \placeholder{Date: }{May 31, 2026}\\[60pt]
+    {\large May 31, 2026}\\[60pt]
 
     \vfill
 
@@ -174,7 +174,7 @@ We model the Grid World navigation task as a discrete Markov Decision Process (M
         \textcolor{white}{\textbf{Element}} & \textcolor{white}{\textbf{Description}} \\
         \hline
         \rowcolor{darkred!20}
-        Variables & Agent state coordinate vector $s = (x, y) \in [0, N-1]^2$; action $a \in \{0, 1, 2, 3\}$ (representing Up, Down, Left, Right); reward $r \in \mathbb{R}$. \\
+        Variables & Agent state coordinate vector $s = (x, y) \in [0, N-1]^2$; action $a \in \{0, 1, 2, 3\}$ (representing Up, Down, Left, Right); reward $r \in \{+1.0, -1.0, -0.04\}$ representing Goal state reach, Obstacle collision, and transition step penalty respectively. \\
         \hline
         Governing Equations & Bellman Optimality Equation:
         \[ Q^*(s, a) = R(s, a) + \gamma \max_{a'} Q^*(s', a') \]
@@ -330,6 +330,29 @@ To map these expectation values to discrete action Q-values, we pass them throug
     Q(s, a_i) = \sum_{j=0}^{3} W_{ij} \langle Z_j \rangle + b_i
 \end{equation}
 where $W \in \mathbb{R}^{4 \times 4}$ represents the weight matrix and $b \in \mathbb{R}^4$ is the bias vector, introducing 20 classical parameters. The combined hybrid network contains $16$ quantum and $20$ classical parameters, for a total of $36$ trainable weights. 
+
+\paragraph{Circuit Expressibility and Entanglement Capability}
+The expressibility of a Variational Quantum Circuit (VQC) refers to its ability to generate states that are well-distributed across the Hilbert space, which directly determines its capacity to approximate complex non-linear functions \cite{sim2019}. In this design, expressibility and entangling power are maximized through two main strategies:
+\begin{enumerate}
+    \item \textbf{Input Duplication and Non-linear Feature Crosses}: 
+    To map the 2D coordinate space $(x, y)$ to the 4-qubit register, we duplicate the coordinates so that qubits $q_0, q_2$ encode $x$ and $q_1, q_3$ encode $y$. The initial encoded state is:
+    \begin{equation}
+        |\psi_{\text{enc}}(s)\rangle = R_y(\theta_x)|0\rangle_{q_0} \otimes R_y(\theta_y)|0\rangle_{q_1} \otimes R_y(\theta_x)|0\rangle_{q_2} \otimes R_y(\theta_y)|0\rangle_{q_3}
+    \end{equation}
+    When CNOT gates are subsequently applied between adjacent qubits, they generate quantum entanglement. For example, applying a CNOT between $q_0$ and $q_1$ transforms the state as:
+    \begin{align*}
+        \text{CNOT}_{0\to1} \left(R_y(\theta_x)|0\rangle \otimes R_y(\theta_y)|0\rangle\right) &= \cos\left(\frac{\theta_x}{2}\right)\cos\left(\frac{\theta_y}{2}\right)|00\rangle + \cos\left(\frac{\theta_x}{2}\right)\sin\left(\frac{\theta_y}{2}\right)|01\rangle \\
+        &+ \sin\left(\frac{\theta_x}{2}\right)\sin\left(\frac{\theta_y}{2}\right)|10\rangle + \sin\left(\frac{\theta_x}{2}\right)\cos\left(\frac{\theta_y}{2}\right)|11\rangle
+    \end{align*}
+    This creates product terms of coordinates (e.g., $\sin(\theta_x/2)\sin(\theta_y/2)$). These entangling cross-terms act as a non-linear feature mapping, enabling the circuit to represent complex boundary conditions, such as isolating the obstacle penalty at state $(1, 1)$.
+    
+    \item \textbf{Optimal Ansatz Depth ($R = 3$)}: 
+    A higher repetition depth $R$ increases the circuit's expressibility by adding more variational parameters. However, in accordance with the barren plateau theorem \cite{mcclean2018}, random quantum circuits of large depth $D$ exhibit vanishing gradients, where the variance of the partial derivatives of local expectation values scales exponentially:
+    \begin{equation}
+        \text{Var}\left[\frac{\partial \langle Z_i \rangle}{\partial \theta_k}\right] \sim \mathcal{O}(2^{-n})
+    \end{equation}
+    where $n = 4$ is the number of qubits. By selecting $R=3$ repetitions, we provide exactly $16$ parameters. This is deep enough to cover the necessary state transitions (high expressibility), while remaining shallow enough to avoid barren plateaus and minimize gate decoherence on noisy intermediate-scale quantum devices.
+\end{enumerate}
 
 The detailed gate-level layout and the overall processing pipeline are illustrated in Figure \ref{fig:quantum_circuit} and Figure \ref{fig:quantum_vqc_agent}, respectively.
 
@@ -490,6 +513,7 @@ We verified the quantum network's physical characteristics through exact state t
     \bibitem{jerbi2021} S. Jerbi et al., ``Parametric quantum policies for reinforcement learning,'' \textit{Advances in Neural Information Processing Systems}, vol. 34, pp. 28362--28375, 2021. \href{https://doi.org/10.48550/arXiv.2103.05577}{arXiv:2103.05577}
     \bibitem{lockwood2020} O. Lockwood and M. Si, ``Reinforcement learning with quantum variational circuits,'' \textit{Proceedings of the AAAI Conference on Artificial Intelligence and Interactive Digital Entertainment}, vol. 16, no. 1, pp. 245--251, 2020. \href{https://doi.org/10.1609/aiide.v16i1.7437}{DOI: 10.1609/aiide.v16i1.7437}
     \bibitem{mcclean2018} J. R. McClean et al., ``Barren plateaus in quantum neural network training landscapes,'' \textit{Nature Communications}, vol. 9, no. 1, p. 4812, 2018. \href{https://doi.org/10.1038/s41467-018-07090-4}{DOI: 10.1038/s41467-018-07090-4}
+    \bibitem{sim2019} S. Sim, P. D. Johnson, and A. Aspuru-Guzik, ``Expressibility and entangling capability of parameterized quantum circuits for hybrid quantum-classical algorithms,'' \textit{Advanced Quantum Technologies}, vol. 2, no. 12, p. 1900070, 2019. \href{https://doi.org/10.1002/qute.201900070}{DOI: 10.1002/qute.201900070}
 \end{thebibliography}
 \endgroup
 
