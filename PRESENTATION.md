@@ -1,103 +1,120 @@
-# Presentation Outline: Quantum vs. Classical RL for Grid World Navigation
-**Course Project: Phys450**
+---
+marp: true
+theme: gaia
+_class: lead
+paginate: true
+backgroundColor: #ffffff
+color: #1a1a1a
+style: |
+  section {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    padding: 40px;
+  }
+  h1 {
+    color: #8B0000; /* Dark Red matching the project color system */
+  }
+  h2 {
+    color: #8B0000;
+    border-bottom: 2px solid #8B0000;
+  }
+  footer {
+    font-size: 0.5em;
+    color: #777;
+  }
+  code {
+    background-color: #f4f4f4;
+    color: #d14;
+  }
+---
+
+# Quantum vs. Classical RL for Grid World Navigation
+## A Comparative Analysis
+**Course Project: ELEC/PHYS 450/550**
+
+**Presenter**: Barış Cem Bakay
+**Student ID**: 0082990
+**Institution**: Koç University
+**Instructor**: Assoc. Prof. Mehmet Cengiz Onbaşlı
 
 ---
 
-## Slide 1: Title Slide
-*   **Title**: Quantum Reinforcement Learning for Grid World Navigation: A Comparative Analysis
-*   **Presenter**: Baris Cem Bakay
-*   **Course**: Phys450 - Quantum Computing Project
-*   **Visual**: A simple graphic or icon of a quantum circuit alongside a grid world.
+## 1. Project Objectives
+* **The Core Goal**: Explore whether near-term Quantum Neural Networks (Variational Quantum Circuits) can solve sequential decision-making tasks compared to classical deep learning.
+* **Core Deliverables**:
+  1. Classical Deep Q-Network (DQN) implementation as baseline.
+  2. Hybrid Quantum DQN using Qiskit and PyTorch integration.
+  3. Accuracy verification and scaling analysis (3x3 vs. 4x4 grids).
+  4. Physical verification via exact Quantum State Tomography.
 
 ---
 
-## Slide 2: Project Objectives
-*   **The Goal**: Explore whether near-term Quantum Neural Networks (VQC) can successfully solve sequential decision-making tasks compared to classical deep learning.
-*   **Core Deliverables**:
-    1. Classical Deep Q-Network (DQN) implementation and baseline.
-    2. Quantum DQN implementation in Qiskit using Variational Quantum Circuits.
-    3. Accuracy verification and scaling analysis (3x3 vs 4x4 grids).
-    4. Exact Quantum State Tomography of the policy network during navigation.
+## 2. Environment & Problem Formulation
+* **State Space**: Discrete 2D Grid World ($3\times3$ and $4\times4$) containing coordinates $(x,y)$.
+* **Action Space**: 4 discrete movement directions: $\mathcal{A} = \{\text{Up, Down, Left, Right}\}$.
+* **Reward Dynamics**: Goal state $(N-1, N-1)$ yields $+1.0$; Obstacle $(1,1)$ yields $-1.0$. Step penalty is $-0.04$ per move.
+
+![center width:750px](results/grid_world_visualization.png)
 
 ---
 
-## Slide 3: Environment & Problem Formulation
-*   **The Environment**: Discrete 2D Grid World (Sizes: 3x3 and 4x4).
-*   **State Space**: Agent Cartesian coordinates $(x, y)$.
-*   **Action Space**: 4 discrete moves (Up, Down, Left, Right).
-*   **Reward Dynamics**:
-    *   Goal State $(N-1, N-1)$: $+1.0$ (Termination)
-    *   Obstacle State $(1, 1)$: $-1.0$ (Termination)
-    *   Step Penalty: $-0.04$ per move (encourages shortest pathfinding).
-*   **Visual Idea**: Screenshot of the terminal environment grid (S . . / . X . / . . G).
+## 3. Classical DQN Architecture (Baseline)
+* **Structure**: Feedforward Deep Q-Network implemented in PyTorch.
+* **Architecture**: Input layer (2) $\to$ Hidden 1 (64, ReLU) $\to$ Hidden 2 (64, ReLU) $\to$ Output (4, Linear).
+* **Parameter Cost**: **4,612 trainable weights**.
+* **Exploration Policy**: $\epsilon$-Greedy exploration with a replay buffer (capacity = 5,000).
+
+![center width:700px](results/classical_dqn_agent.png)
 
 ---
 
-## Slide 4: Classical DQN Architecture (Baseline)
-*   **Structure**: Standard Feedforward Deep Q-Network implemented in PyTorch.
-*   **Layers**: 2 hidden layers with 64 neurons each + ReLU activations.
-*   **Total Parameters**: **4,612 trainable weights**.
-*   **Exploration**: Epsilon-Greedy exploration policy with experience replay buffer (capacity = 5,000).
+## 4. Quantum Policy Network (VQC)
+* **Qubits**: 4-qubit circuit replacing the classical neural network.
+* **Data Encoding**: Normalize coordinates to $\theta \in [0, \pi]$ and encode via $R_y$ rotation gates.
+* **Ansatz**: `RealAmplitudes` with linear entangling CNOT ladders (3 repetitions).
+* **Total Parameters**: **36 trainable weights** ($16$ quantum angles + $20$ classical weights) — a **99.2% parameter reduction**!
+
+![center width:900px](results/quantum_vqc_agent.png)
 
 ---
 
-## Slide 5: Quantum Policy Network (VQC)
-*   **The Paradigm Shift**: Replacing the 4,612-parameter classical neural network with a compact 4-qubit quantum circuit.
+## 5. Accuracy Verification (3x3 Grid)
+* **Key Finding**: The Quantum agent successfully matches classical accuracy!
+* **Optimal Path**: Shortest path to goal takes 3 steps. Theoretical maximum reward is $+0.88$.
+* **Convergence**: Classical DQN converges by Episode 50; Quantum VQC stabilizes by Episode 110.
 
-```
-     ┌──────────────┐ ░ ┌──────────────────────────────────────────┐
-q_0: ┤ Ry(input[0]) ├─░─┤0                                         ├ ── Z ── Q(s, Up)
-     ├──────────────┤ ░ │                                          │
-q_1: ┤ Ry(input[1]) ├─░─┤1                                         ├ ── Z ── Q(s, Down)
-     └──────────────┘ ░ │  RealAmplitudes (3 layers, 12 weights)   │
-q_2: ─────────────────░─┤2                                         ├ ── Z ── Q(s, Left)
-                      ░ │                                          │
-q_3: ─────────────────░─┤3                                         ├ ── Z ── Q(s, Right)
-                      ░ └──────────────────────────────────────────┘
-```
-
-*   **Data Encoding (Angle Encoding)**: $(x,y)$ coordinates normalized to angles $\theta \in [0, \pi]$ and applied via $R_y$ rotation gates.
-*   **Ansatz**: `RealAmplitudes` with linear entangling CNOT ladders (3 repetition layers).
-*   **Measurement**: Q-values calculated from the Pauli-Z expectation values of each qubit.
-*   **Total Parameters**: **28 trainable weights** ($12$ quantum rotation angles + $16$ classical post-processing weights).
+![center width:700px](results/reward_plot.png)
 
 ---
 
-## Slide 6: Accuracy Verification (3x3 Grid)
-*   **Key Finding**: The Quantum VQC successfully matches classical accuracy on the 3x3 grid!
-*   **Optimal Path**: Shortest path to goal is 3 steps. Theoretical maximum reward = $1.0 - (3 \times 0.04) = +0.88$.
-*   **Results**:
-    *   Classical DQN reached $+0.88$ by Episode 50.
-    *   Quantum VQC reached $+0.88$ by Episode 110.
-*   **Visual to Include**: `results/reward_plot.png` (Comparative learning curves).
+## 6. Scaling Analysis (3x3 vs. 4x4 Grids)
+* **The Scaling Challenge**: State space nearly doubles (9 to 16 states) and optimal path length doubles (3 to 6 steps).
+* **Empirical Results**:
+  * **Classical 4x4**: Converges by Episode 200 (Total reward: $-0.08$ due to sub-optimal 27 steps).
+  * **Quantum 4x4**: Converges by Episode 220 (Total reward: $+0.72$ matching the optimal 7 steps).
+
+![center width:750px](results/scaling_analysis_plot.png)
 
 ---
 
-## Slide 7: Scaling Analysis (3x3 vs. 4x4 Grids)
-*   **The Scaling Question**: How do both models react when the state space nearly doubles (9 states $\to$ 16 states) and optimal path length doubles (3 $\to$ 6 steps)?
-*   **Empirical Results**:
-    *   Classical 4x4 reached goal by Episode 200 (Total reward: $-0.08 = 27 \text{ steps}$).
-    *   Quantum 4x4 reached goal by Episode 230 (Total reward: $+0.72 = 7 \text{ steps}$).
-*   **Visual to Include**: `results/scaling_analysis_plot.png`.
+## 7. The Core Trade-off
+* **Quantum Advantage (Memory)**: $99.2\%$ Parameter Reduction. Moving from 3x3 to 4x4 required **zero extra parameters** in the VQC ($36$ weights), while classical networks scaled from $4,612$ parameters.
+* **Classical Advantage (Speed)**: VQC simulation on CPUs is computationally heavy.
+* **The Bottleneck**: Parameter-shift gradient rules require simulating $2N$ quantum circuits per parameter per step (over 15 million simulations per training run).
 
 ---
 
-## Slide 8: The Core Trade-off (Parametric vs. Computational)
-*   **Quantum Advantage (Memory)**: 99.4% Parameter Reduction! Moving from 3x3 to 4x4 required **zero extra parameters** in the quantum circuit ($28$ weights), while classical networks required $>4,000$ weights.
-*   **Classical Advantage (Speed)**: VQC simulation is computationally heavy.
-*   **The Bottleneck**: Parameter-Shift rule required simulating over 1,500 quantum circuits per step in Python during backpropagation (over 15 million simulations per run).
+## 8. Quantum State Tomography
+* **Verification**: Exact state tomography performed on the final density matrix $\rho$ across key grid coordinates.
+* **State Purity ($\gamma$)**: $\text{Tr}(\rho^2) = 1.0$. Confirms unitary simulation preserved 100% state purity.
+* **Von Neumann Entropy ($S$)**: $-\text{Tr}(\rho \ln \rho) = 0.0$. Verifies coherent, pure-state policy execution.
+
+![center width:850px](results/tomography_analysis.png)
 
 ---
 
-## Slide 9: Quantum State Tomography Verification
-*   **Physical Verification**: Exact state tomography performed on the final density matrix $\rho$ across key grid coordinates.
-*   **State Purity ($\gamma$)**: $\text{Tr}(\rho^2) = 1.0$. Confirms unitary simulation preserved 100% state purity without decoherence.
-*   **Von Neumann Entropy ($S$)**: $-\text{Tr}(\rho \ln \rho) = 0.0$. Verifies coherent pure-state policy execution.
-*   **Visual to Include**: `results/tomography_analysis.png` (Density matrix heatmaps).
-
----
-
-## Slide 10: Conclusion & Future Outlook
-*   **Summary**: Quantum RL is highly viable and extremely parameter-efficient for discrete navigation tasks.
-*   **Future Work**: Executing this policy network directly on physical QPU hardware (like IBM Quantum chips) or using quantum adjoint differentiation would eliminate the parameter-shift simulation bottleneck, unlocking scalable quantum advantage.
-*   **Q&A**: Open the floor to questions.
+## 9. Conclusion & Outlook
+* **Summary**: Quantum RL is highly viable and extremely parameter-efficient for discrete navigation tasks.
+* **Future Work**:
+  1. Deploying policy networks on physical QPU hardware (e.g., IBM Quantum).
+  2. Utilizing adjoint quantum differentiation methods to eliminate the parameter-shift simulation bottleneck.
+* **Q&A**: Open the floor to questions.

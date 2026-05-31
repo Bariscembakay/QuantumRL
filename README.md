@@ -96,6 +96,6 @@ python src/scaling_analysis.py
 
 Detailed findings can be found in [REPORT.md](REPORT.md). 
 
-1. **Parameter Efficiency**: The Quantum agent solves the navigation tasks using only **28 trainable weights** (99.4% fewer than the classical DQN network which uses 4,612 weights).
+1. **Parameter Efficiency**: The Quantum agent solves the navigation tasks using only **36 trainable weights** (99.2% fewer than the classical DQN network which uses 4,612 weights).
 2. **Path Optimality**: Both agents successfully converge to optimal navigation trajectories on 3x3 grids (reward $+0.88$, matching the 3-step perfect path) and 4x4 grids (reward $+0.72$, matching the 7-step near-optimal path).
 3. **Simulation Trade-off**: Quantum training on classical CPUs requires calculating gradients using the Parameter-Shift rule, scaling simulation time substantially (1.5+ hours for 4x4). This highlighted the critical need for native QPU acceleration or adjoint method integration in real-world deployments.
