@@ -39,21 +39,21 @@ def run_scaling_analysis():
     print("Scaling data saved to results/scaling_history.csv")
 
     # Plot Comparison
-    plt.figure(figsize=(14, 8))
+    plt.figure(figsize=(12, 7))
     for col in df.columns:
-        # Smooth the data
-        smooth_data = df[col].rolling(window=15).mean()
+        # Smooth the data with a larger window to filter out epsilon-greedy noise
+        smooth_data = df[col].rolling(window=40, min_periods=1).mean()
         style = '-' if 'quantum' in col else '--'
         color = 'green' if '3x3' in col else 'red'
         label = col.replace('_', ' ').title()
-        plt.plot(smooth_data, label=label, linestyle=style, color=color if 'classical' not in col else None)
+        plt.plot(smooth_data, label=label, linestyle=style, color=color, linewidth=2)
 
     plt.xlabel('Episode')
-    plt.ylabel('Total Reward (Smoothed)')
+    plt.ylabel('Total Reward (Rolling Mean, Window=40)')
     plt.title('Scaling Analysis: Grid World Navigation (3x3 vs 4x4)')
-    plt.legend()
+    plt.legend(loc='lower right')
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.savefig("results/scaling_analysis_plot.png")
+    plt.savefig("results/scaling_analysis_plot.png", dpi=300)
     print("Scaling plot saved to results/scaling_analysis_plot.png")
 
 if __name__ == "__main__":
