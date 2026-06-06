@@ -1,32 +1,3 @@
----
-marp: true
-theme: gaia
-_class: lead
-paginate: true
-backgroundColor: #ffffff
-color: #1a1a1a
-style: |
-  section {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    padding: 40px;
-  }
-  h1 {
-    color: #8B0000; /* Dark Red matching the project color system */
-  }
-  h2 {
-    color: #8B0000;
-    border-bottom: 2px solid #8B0000;
-  }
-  footer {
-    font-size: 0.5em;
-    color: #777;
-  }
-  code {
-    background-color: #f4f4f4;
-    color: #d14;
-  }
----
-
 # Quantum vs. Classical RL for Grid World Navigation
 
 ## A Comparative Analysis
